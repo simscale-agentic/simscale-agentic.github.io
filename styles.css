@@ -2309,3 +2309,12 @@ main > section.group::before { border-top-color: rgba(0,0,0,.22); }
   border-color: #76b900;
   transform: translateY(-1px);
 }
+.authors { margin: 22px 0 0; color: var(--ink); font-size: 19px; line-height: 1.55; }
+.authors span { white-space: nowrap; }
+.authors sup, .affiliations sup { font-size: .68em; }
+.affiliations { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 8px 0 0; color: var(--muted); font-size: 16px; }
+.affiliations > span { display: inline-flex; gap: 22px; }
+@media (max-width: 560px) {
+  .authors { font-size: 16px; }
+  .affiliations { font-size: 14px; }
+}
