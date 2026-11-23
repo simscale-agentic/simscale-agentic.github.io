@@ -19,7 +19,7 @@
   // and GR00T N1.6 (groot) values. null marks a condition that does not exist.
   const CHARTS = {
     realworld: {
-      series: [['Real-Demos (60 real-world demos)', COLOR.real], ['SimFoundry Cousins + DexMimicGen (120 human demos)', COLOR.cousins], ['SimScale (Ours, 1 human demo)', COLOR.ours, true]],
+      series: [['Real-Demos (60 Real-World Demos)', COLOR.real], ['SimFoundry Cousins + DexMimicGen (120 Human Demos)', COLOR.cousins], ['SimScale (Ours, 1 Human Demo)', COLOR.ours, true]],
       backends: true,
       panels: TASKS.map((t, i) => ({ title: t, groups: [{ dino: [[50, 68, 90], [51, 56.5, 84.5], [51.1, 43.3, 84.5]][i], groot: [[53, 62, 80], [51, 50, 79.5], [67.6, 33.7, 85]][i] }] }))
     },
@@ -34,9 +34,9 @@
       // Averages over the three tasks with DINOv3 + FMT.
       series: [['SimFoundry Twin', COLOR.twin], ['SimFoundry Cousins', COLOR.cousins], ['RoboCasa', COLOR.robocasa], ['Articraft', COLOR.articraft], ['GPT-6-Astra', COLOR.astraAsset], ['SimScale AssetEngine (Ours)', COLOR.oursAsset, true]],
       panels: [
-        { title: 'Held-out AssetEngine assets', groups: [{ v: [26.9, 36.7, 53.6, 51.9, 60.6, 92.4] }] },
-        { title: 'Held-out RoboCasa assets', groups: [{ v: [54.1, 67.6, 70.4, 42.5, 52.1, 96.9] }] },
-        { title: 'Digital twins of real objects', groups: [{ v: [46.9, 54.2, 61.5, 42.7, 55.1, 83.3] }] }
+        { title: 'Held-Out AssetEngine Assets', groups: [{ v: [26.9, 36.7, 53.6, 51.9, 60.6, 92.4] }] },
+        { title: 'Held-Out RoboCasa Assets', groups: [{ v: [54.1, 67.6, 70.4, 42.5, 52.1, 96.9] }] },
+        { title: 'Digital Twins of Real Objects', groups: [{ v: [46.9, 54.2, 61.5, 42.7, 55.1, 83.3] }] }
       ]
     },
     assets: {
@@ -49,7 +49,7 @@
       }] }))
     },
     demos: {
-      series: [['GPT-6-Astra Programs', COLOR.astra], ['Human Demos per Asset (120 human demos)', COLOR.human], ['SimScale DemoEngine (Ours, 1 human demo)', COLOR.ours, true]],
+      series: [['GPT-6-Astra Programs', COLOR.astra], ['Human Demos per Asset (120 Human Demos)', COLOR.human], ['SimScale DemoEngine (Ours, 1 Human Demo)', COLOR.ours, true]],
       backends: true,
       panels: TASKS.map((t, i) => ({ title: t, groups: [{
         dino: [[0, 82, 90], [0, 87.5, 84.5], [7.2, 85.2, 84.5]][i],
@@ -128,7 +128,7 @@
       grid.appendChild(panel);
     });
     host.appendChild(grid);
-    const yl = document.createElement('p'); yl.className = 'pc-axis'; yl.textContent = 'Task score (%)'; host.insertBefore(yl, grid);
+    const yl = document.createElement('p'); yl.className = 'pc-axis'; yl.textContent = 'Task Score (%)'; host.insertBefore(yl, grid);
     const update = () => {
       // A method with no result for the selected backend is also dropped from the legend.
       items.forEach((li, si) => { li.hidden = bars.some((b) => b.si === si) && bars.every((b) => b.si !== si || b.pick() === null); });
@@ -143,6 +143,52 @@
       shown = true;
     };
     whenVisible(host, update);
+  });
+
+  // Scaling curves: real-world task score (DINOv3 + FMT) of SimScale policies trained on 10, 40, and 160 AssetEngine
+  // assets, 100 trajectories per asset. Simulation baselines are trained on 40 assets.
+  const SCALING = {
+    x: [['10', '1K'], ['40', '4K'], ['160', '16K']],
+    tasks: [['PutPot', [75, 90, 97]], ['HangMug', [50, 84.5, 96.5]], ['PutCharger', [47.8, 84.5, 97]]],
+    baselines: [
+      ['SimFoundry Cousins', COLOR.cousins, 'square', [68, 56.5, 43.3]], ['RoboCasa', COLOR.robocasa, 'diamond', [57, 11, null]],
+      ['Articraft', COLOR.articraft, 'up', [5, 38, 66.9]], ['GPT-6-Astra', COLOR.astraAsset, 'down', [70, 7.5, 52.8]]
+    ]
+  };
+  const SHAPE = {
+    square: '<rect x="2" y="2" width="8" height="8"/>', diamond: '<path d="M6 .6 11.4 6 6 11.4.6 6z"/>',
+    up: '<path d="M6 1l5.4 9.6H.6z"/>', down: '<path d="M6 11 .6 1.4h10.8z"/>'
+  };
+  const mark = (shape, color) => `<svg class="lc-mark" viewBox="0 0 12 12" aria-hidden="true" style="--c:${color}">${SHAPE[shape]}</svg>`;
+  const xAt = (i) => (i + .5) / SCALING.x.length * 100;
+  const ticks = [0, 25, 50, 75, 100].map((y) => `<span class="pc-tick" style="bottom:${y / 1.1}%"><b>${y}</b></span>`).join('');
+
+  document.querySelectorAll('[data-scaling]').forEach((host) => {
+    const mode = host.dataset.scaling;
+    const panels = mode === 'average'
+      ? [['', SCALING.x.map((_, i) => SCALING.tasks.reduce((s, [, v]) => s + v[i], 0) / SCALING.tasks.length)]]
+      : SCALING.tasks;
+    const base = mode === 'baselines' ? SCALING.baselines : [];
+    const legend = [...base.map(([name, color, shape]) => `<li>${mark(shape, color)}${name}</li>`),
+      '<li class="ours"><i class="lc-key"></i>SimScale (Ours)</li>'];
+    const plots = panels.map(([title, v], t) => {
+      const line = v.map((y, i) => `${xAt(i)},${100 - y / 1.1}`).join(' ');
+      const others = base.filter(([, , , s]) => s[t] !== null).map(([name, color, shape, s]) =>
+        `<span class="lc-pt base" style="left:${xAt(1)}%;bottom:${s[t] / 1.1}%" title="${name}: ${fmt(s[t])}">${mark(shape, color)}</span>`);
+      const ours = v.map((y, i) =>
+        `<span class="lc-pt ours" style="left:${xAt(i)}%;bottom:${y / 1.1}%;--d:${i}"><i></i><b data-to="${y}">0.0</b></span>`);
+      const xs = SCALING.x.map(([a, n], i) => `<span style="left:${xAt(i)}%">${a}<br>(${n})</span>`);
+      return `<div class="pc-panel lc-panel">${title ? `<h5>${title}</h5>` : ''}<div class="pc-plot">${ticks}
+        <svg class="lc-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${line}" vector-effect="non-scaling-stroke"/></svg>
+        ${others.join('')}${ours.join('')}<div class="lc-x">${xs.join('')}</div></div></div>`;
+    });
+    host.innerHTML = `<div class="pc-head"><div class="zs"><ul class="pc-legend">${legend.join('')}</ul><span>Zero-Shot<br>Sim-to-Real</span></div></div>` +
+      `<p class="pc-axis">${mode === 'average' ? 'Average Task Score (%)' : 'Task Score (%)'}</p>` +
+      `<div class="pc-panels" style="--n:${panels.length}">${plots.join('')}</div><p class="lc-xtitle"># Assets (# Trajectories)</p>`;
+    whenVisible(host, () => {
+      host.classList.add('on');
+      host.querySelectorAll('.lc-pt.ours b').forEach((b, i) => countUp(b, +b.dataset.to, reducedMotion ? 0 : (i % 3) * 450));
+    });
   });
 
   // User-study stacked bars
