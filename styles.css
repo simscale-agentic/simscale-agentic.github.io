@@ -2338,13 +2338,26 @@ main > section.group::before { border-top-color: rgba(0,0,0,.22); }
 .zs { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin: 0 auto; }
 .zs .pc-legend { padding: 7px 14px; border: 1.5px dashed #5E636E; border-radius: 4px; }
 .zs > span { color: #3A3F48; font-size: .9rem; font-style: italic; font-weight: 600; line-height: 1.25; text-align: center; white-space: nowrap; }
-.scale-teaser { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 36px; align-items: center; margin-top: 44px; }
+.scale-teaser { margin-top: 44px; container-type: inline-size; }
+.scale-show { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; align-items: center; margin-top: 24px; }
+.scale-video { position: relative; margin: 0; overflow: hidden; border-radius: 12px; background: #f5f3ee; }
+.scale-video video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.scale-badge { position: absolute; left: 12px; top: 12px; padding: 5px 11px; color: #fff; background: rgba(20, 24, 30, .72); border-radius: 999px; font-size: .82rem; font-weight: 500; }
+.scale-badge b { font-weight: 800; }
+.sync .lc-line { transition: none; }
+.sync .lc-pt { transition: opacity .3s ease; }
+.sync .lc-pt.shown { opacity: 1; }
+.sync .lc-pt i { transition: transform .3s ease, box-shadow .3s ease; }
+.sync .lc-pt.active i { transform: scale(1.35); box-shadow: 0 0 0 5px rgba(31, 78, 140, .18); }
+.sync .lc-x span { transition: color .3s ease; color: var(--muted); }
+.sync .lc-x span.active { color: var(--ink); font-weight: 700; }
 .scale-teaser h2 { margin: 0 0 12px; color: #14210a; font-size: 26px; font-weight: 600; line-height: 1.25; }
+@media (min-width: 761px) { .scale-teaser h2 { font-size: min(26px, 2.9cqi); white-space: nowrap; } }
 .scale-teaser h2 + p { margin: 0; color: rgba(0,0,0,.72); font-size: 18px; line-height: 1.62; text-align: justify; hyphens: auto; }
 .scale-teaser h2 + p b { color: var(--accent); font-weight: 650; }
 .scale-teaser .pchart { margin: 0; }
 @media (max-width: 760px) {
-  .scale-teaser { grid-template-columns: 1fr; gap: 20px; }
+  .scale-show { grid-template-columns: 1fr; gap: 20px; }
   .scale-teaser h2 + p { text-align: left; }
 }
 @media (prefers-reduced-motion: reduce) {

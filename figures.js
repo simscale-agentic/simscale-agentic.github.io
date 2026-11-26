@@ -185,11 +185,50 @@
     host.innerHTML = `<div class="pc-head"><div class="zs"><ul class="pc-legend">${legend.join('')}</ul><span>Zero-Shot<br>Sim-to-Real</span></div></div>` +
       `<p class="pc-axis">${mode === 'average' ? 'Average Task Score (%)' : 'Task Score (%)'}</p>` +
       `<div class="pc-panels" style="--n:${panels.length}">${plots.join('')}</div><p class="lc-xtitle"># Assets (# Trajectories)</p>`;
+    const video = host.closest('.scale-show')?.querySelector('video');
+    if (video && !reducedMotion) { followVideo(host, video); return; }
     whenVisible(host, () => {
       host.classList.add('on');
       host.querySelectorAll('.lc-pt.ours b').forEach((b, i) => countUp(b, +b.dataset.to, reducedMotion ? 0 : (i % 3) * 450));
     });
   });
+
+  // The opening chart follows the scaling video, which holds on 10, 40, and 160 assets, grows between them, and
+  // shrinks back to 10 at the end of its loop. Keyframes are (video time in s, scale index).
+  function followVideo(host, video) {
+    const KEYS = [[0, 0], [2, 0], [3, 1], [5, 1], [6, 2], [8.5, 2], [9.5, 0]];
+    const at = (t) => {
+      for (let k = 1; k < KEYS.length; k++) {
+        const [t1, p1] = KEYS[k], [t0, p0] = KEYS[k - 1];
+        if (t < t1) { const u = (t - t0) / (t1 - t0); return p0 + (p1 - p0) * u * u * (3 - 2 * u); }
+      }
+      return 0;
+    };
+    const line = host.querySelector('.lc-line'), pts = [...host.querySelectorAll('.lc-pt.ours')], xs = [...host.querySelectorAll('.lc-x span')];
+    const badge = host.closest('.scale-show').querySelector('.scale-badge');
+    host.classList.add('sync');
+    let shown = -1;
+    const frame = () => {
+      const p = at(video.currentTime % KEYS[KEYS.length - 1][0]);
+      line.style.clipPath = `inset(-12px ${100 - xAt(p)}% -12px 0)`;
+      const n = Math.floor(p + .02);
+      if (n !== shown) {
+        pts.forEach((el, i) => {
+          const b = el.querySelector('b');
+          el.classList.toggle('shown', i <= n);
+          el.classList.toggle('active', i === n);
+          if (i <= n && i > shown) countUp(b, +b.dataset.to, 0);
+          if (i > n) b.dataset.v = 0;
+        });
+        xs.forEach((el, i) => el.classList.toggle('active', i === n));
+        const [assets, trajs] = SCALING.x[n];
+        badge.innerHTML = `<b>${assets}</b> Assets &middot; <b>${trajs}</b> Trajectories per Task`;
+        shown = n;
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
 
   // User-study stacked bars
   document.querySelectorAll('[data-stack]').forEach((host) => {
